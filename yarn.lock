@@ -1518,10 +1518,10 @@
   dependencies:
     "@sinonjs/commons" "^1.7.0"
 
-"@skynethq/content-record-library@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@skynethq/content-record-library/-/content-record-library-0.2.1.tgz#c48d793def01c1a37bb059c9e03b1a8ba36a8dd9"
-  integrity sha512-QB1sAGVyDa9mPWxxyMs+U70WcJGe1jivfHlVQ2ZZ0nFpU8Y2W3dHNM2bax8HdM1EGLEv/kfk57LY7NW5WNLclA==
+"@skynethub/skapps-record-library@^0.1.0-beta":
+  version "0.1.0-beta"
+  resolved "https://registry.yarnpkg.com/@skynethub/skapps-record-library/-/skapps-record-library-0.1.0-beta.tgz#aa576a776fdffce1f8905f4b87e91bf316e24bc7"
+  integrity sha512-uxvL2Ep5Hor/yHdhYcajmPkFzW6zWAMid1o27xIQ1OLwZbhgA4YzUzO8EuNrmtnM38OpBbf+LYj3rpoLBApPdA==
   dependencies:
     post-me "^0.4.5"
     skynet-js "^4.0.0-beta"
