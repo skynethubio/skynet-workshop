@@ -226,14 +226,29 @@ try {
     /*        Step 4.7 Code goes here              */
     /************************************************/
     try {
+      let profp = await contentRecord.getProfile();
+      console.log("original Profile",profp);     
       let profile = {
-        username:userID,
-        aboutme:"test"
+        username:"c3po",
+        aboutMe:"is a droid programmed for etiquette and protocol, built by the heroic Jedi Anakin Skywalker, and a constant companion to astromech R2-D2",
+        location:"Tatooine",
+        topics:['War','Games']
       }
       console.log('In the method');
-      await contentRecord.createProfile(profile);
+      await contentRecord.setProfile(profile);
       let prof = await contentRecord.getProfile();
-      console.log(prof);
+      console.log("Updated Profile",prof);
+      let pref = {
+        darkmode:true,
+        portal:"siasky.net"
+      }
+      await contentRecord.setPreference(pref);
+      let prefr = await contentRecord.getPreference();
+      console.log("preferance",prefr);
+      let proHist = await contentRecord.getProfileHistory();
+      console.log("profileHistory",proHist);
+      let prefHist = await contentRecord.getPreferenceHistory();
+      console.log("getPreferanceHistory",prefHist);
     } catch (error) {
       console.log(`error with CR DAC: ${error.message}`);
     }
