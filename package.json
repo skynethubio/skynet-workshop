@@ -5,6 +5,7 @@
   "dependencies": {
     "@skynethq/content-record-library": "^0.2.1",
     "@skynethub/userprofile-record-library": "^0.1.0-beta",
+    "@kbiswas/skapps-record-library": "0.0.2-beta",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
