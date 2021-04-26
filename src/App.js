@@ -1,418 +1,434 @@
-// Import react components
-import { useState, useEffect } from 'react';
+import { Buffer } from "buffer"
+import { SkynetClient, MySky, JsonData } from "skynet-js";
+import { ChildHandshake, Connection, WindowMessenger } from "post-me";
+import { IContentInfo, skappActionType, IPublishedApp, IIndex, IPage, IContentPersistence, INewContentPersistence, EntryType, IDACResponse, IDictionary, IContentRecordDAC, IFilePaths, IAppComments, IAppInfo, IAppStats, IDeployedApp } from "./types";
 
-// Import App Component & helper
-import WorkshopForm from './components/Form';
-import generateWebPage from './helpers/generateWebPage';
+// DAC consts
+const DATA_DOMAIN = "skapps.hns";
 
-// Import UI Components
-import { Header, Tab, Container } from 'semantic-ui-react';
-import { SkynetClient } from 'skynet-js';
-/************************************************/
-/*        Step 4.2 Code goes here               */
-/************************************************/
-import { UserProfileDAC } from '@skynethub/userprofile-record-library';
-/*****/
+//const urlParams = new URLSearchParams(window.location.search);
+const DEBUG_ENABLED =  true;
+const DEV_ENABLED = true;
 
-/************************************************/
-/*        Step 1.2 Code goes here               */
-/************************************************/
-// We'll define a portal to allow for developing on localhost.
-// When hosted on a skynet portal, SkynetClient doesn't need any arguments.
-const portal = 'https://siasky.net/';
+// page consts
+const ENTRY_MAX_SIZE = 1 << 12; // 4kib
+const PAGE_REF = '[NUM]';
 
-// Initiate the SkynetClient
-const client = new SkynetClient(portal);
-/*****/
+// index consts
+const INDEX_DEFAULT_PAGE_SIZE = 1000;
+const INDEX_VERSION = 1;
 
-/************************************************/
-/*        Step 4.3 Code goes here               */
-/************************************************/
-const userprofile = new UserProfileDAC();
+// ContentRecordDAC is a DAC that allows recording user interactions with pieces
+// of content. There are two types of interactions which are:
+// - content creation
+// - content interaction (can be anything)
+//
+// The DAC will store these interactions across a fanout data structure that
+// consists of an index file that points to multiple page files.
+export default class ContentRecordDAC implements IContentRecordDAC {
+  protected connection: Promise<Connection>;
 
-/*****/
+  private client: SkynetClient
+  private mySky: MySky;
+  private paths: IFilePaths;
+  private skapp: string;
+  private skappDict : any={};
+  public constructor(
+  ) {
+    // create client
+    this.client = new SkynetClient();
 
-function App() {
-  // Define app state helpers
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+    // define API
+    const methods = {
+      init: this.init.bind(this),
+      onUserLogin: this.onUserLogin.bind(this),
+      skappAction: this.skappAction.bind(this),
+      getPublishedApps: this.getPublishedApps.bind(this),
+      getSkappsInfo: this.getSkappsInfo.bind(this),
+      getSkappStats: this.getSkappStats.bind(this),
+      getSkappComments: this.getSkappComments.bind(this),
+      getDeployedApps: this.getDeployedApps.bind(this)
 
-  // Step 1 Helpers
-  const [file, setFile] = useState();
-  const [fileSkylink, setFileSkylink] = useState('');
-
-  // Step 2 Helpers
-  const [name, setName] = useState('');
-  const [webPageSkylink, setWebPageSkylink] = useState('');
-
-  // Step 3 Helpers
-  const [dataKey, setDataKey] = useState('');
-  const [userColor, setUserColor] = useState('#000000');
-  const [filePath, setFilePath] = useState();
-  const [userID, setUserID] = useState();
-  const [mySky, setMySky] = useState();
-  const [loggedIn, setLoggedIn] = useState(null);
-
-  // When dataKey changes, update FilePath state.
-  useEffect(() => {
-    setFilePath(dataDomain + '/' + dataKey);
-  }, [dataKey]);
-
-  /************************************************/
-  /*        Step 3.1 Code goes here               */
-  /************************************************/
-
-  const dataDomain = '';
-
-  /*****/
-
-  // On initial run, start initialization of MySky
-  useEffect(() => {
-    /************************************************/
-    /*        Step 3.2 Code goes here               */
-    /************************************************/
-    async function initMySky() {
-      try {
-        // load invisible iframe and define app's data domain
-        // needed for permissions write
-        const mySky = await client.loadMySky(dataDomain,{dev:true, debug: true});
-
-        // load necessary DACs and permissions
-        await mySky.loadDacs(userprofile);
-
-        // check if user is already logged in with permissions
-        const loggedIn = await mySky.checkLogin();
-
-        // set react state for login status and
-        // to access mySky in rest of app
-        setMySky(mySky);
-        setLoggedIn(loggedIn);
-        if (loggedIn) {
-          setUserID(await mySky.userID());
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    // call async setup function
-    initMySky();
-    /*****/
-  }, []);
-
-  // Handle form submission. This is where the bulk of the workshop logic is
-  // handled
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    console.log('form submitted');
-    setLoading(true);
-
-    /************************************************/
-    /*        Part 1: Upload a file                */
-    /************************************************/
-    console.log('Uploading file...');
-
-    /************************************************/
-    /*        Step 1.3 Code goes here               */
-    /************************************************/
-    // Upload user's file and get backs descriptor for our Skyfile
-    const { skylink } = await client.uploadFile(file);
-
-    // skylinks start with 'sia://' and don't specify a portal URL
-    // we can generate URLs for our current portal though.
-    const skylinkUrl = await client.getSkylinkUrl(skylink);
-
-    console.log('File Uploaded:', skylinkUrl);
-
-    // To use this later in our React app, save the URL to the state.
-    setFileSkylink(skylinkUrl);
-    /************************************************/
-    /*        Part 2: Upload a Web Page             */
-    /************************************************/
-    // console.log('Uploading web page...');
-
-    /************************************************/
-    /*        Step 2.1 Code goes here               */
-    /************************************************/
-    // Create the text of an html file what will be uploaded to Skynet
-    // We'll use the skylink from Part 1 in the file to load our Skynet-hosted image.
-    const webPage = generateWebPage(name, skylinkUrl, userID, filePath);
-
-    // Build our directory object, we're just including the file for our webpage.
-    const webDirectory = {
-      'index.html': webPage,
-      // 'couldList.jpg': moreFiles,
     };
 
-    // Upload user's webpage
-    const { skylink: dirSkylink } = await client.uploadDirectory(
-      webDirectory,
-      'certificate'
+    // create connection
+    this.connection = ChildHandshake(
+      new WindowMessenger({
+        localWindow: window,
+        remoteWindow: window.parent,
+        remoteOrigin: "*",
+      }),
+      methods,
     );
-
-    // generate a URL for our current portal
-    const dirSkylinkUrl = await client.getSkylinkUrl(dirSkylink);
-
-    console.log('Web Page Uploaded:', dirSkylinkUrl);
-
-    // To use this later in our React app, save the URL to the state.
-    setWebPageSkylink(dirSkylinkUrl);
-    /************************************************/
-    /*        Part 3: MySky                         */
-    /************************************************/
-    console.log('Saving user data to MySky file...');
-
-    /************************************************/
-    /*        Step 3.6 Code goes here              */
-    /************************************************/
-    // create JSON data to write to MySky
-    const jsonData = {
-      name,
-      skylinkUrl,
-      dirSkylinkUrl,
-      color: userColor,
-    };
-
-    // call helper function for MySky Write
-    await handleMySkyWrite(jsonData);
-    /*****/
-
-    setLoading(false);
-  };
-
-  const handleMySkyLogin = async () => {
-    /************************************************/
-    /*        Step 3.3 Code goes here               */
-    /************************************************/
-    // Try login again, opening pop-up. Returns true if successful
-    const status = await mySky.requestLoginAccess();
-
-    // set react state
-    setLoggedIn(status);
-
-    if (status) {
-      setUserID(await mySky.userID());
-    }
-    /*****/
-  };
-
-  const handleMySkyLogout = async () => {
-    /************************************************/
-    /*        Step 3.4 Code goes here              */
-    /************************************************/
-    // call logout to globally logout of mysky
-    await mySky.logout();
-
-    //set react state
-    setLoggedIn(false);
-    setUserID('');
-    /*****/
-  };
-
-  const handleMySkyWrite = async (jsonData) => {
-    /************************************************/
-    /*        Step 3.7 Code goes here              */
-    /************************************************/
-    // Use setJSON to save the user's information to MySky file
-    try {
-      console.log('userID', userID);
-      console.log('filePath', filePath);
-      await mySky.setJSON(filePath, jsonData);
-    } catch (error) {
-      console.log(`error with setJSON: ${error.message}`);
-    }
-    /*****/
-    /************************************************/
-    /*        Step 4.7 Code goes here              */
-    /************************************************/
-    try {
-      console.log("Workshop :: ######### SKYID test ######### ");
-      let SKyIdProf = await userprofile.getProfile("99efce9ce56128c1ecbbf094e59b716c4eecbad607e20b1593589d271c0e66cd");
-      console.log("Workshop :: ######### SKYID Profile:"+SKyIdProf);
-      let profileObj = await userprofile.getProfile(userID);
-      console.log("Workshop :: original Profile", profileObj);
-      let profile = {
-        version: 1,
-        username: "crypto_rocket",
-        aboutMe: "SkynetHub Founder and CEO. Product Architect - SkySpace.hns, Skapp.hns",
-        location: "Virginia",
-        topics: ['Skynet', 'SkyDB']
-      }
-      console.log('Workshop :: before setProfile');
-      await userprofile.setProfile(profile);
-      console.log('Workshop :: before getProfile');
-      let prof = await userprofile.getProfile(userID);
-      console.log("Workshop :: Updated Profile", prof);
-      console.log("Workshop :: ######### PREFERENCES ######### ");
-      let pref = {
-        version: 1,
-        darkmode: true,
-        portal: "siasky.net"
-      }
-      await userprofile.setPreferences(pref);
-      let prefrencesObj = await userprofile.getPreferences(userID);
-      console.log("Workshop :: getPreference() = ", prefrencesObj);
-      let profileHistoryObj = await userprofile.getProfileHistory(userID);
-      console.log("Workshop :: getProfileHistory() = ", profileHistoryObj);
-      let preferencesHistoryObj = await userprofile.getPreferencesHistory(userID);
-      console.log("Workshop :: getPreferencesHistory() = ", preferencesHistoryObj);
+  }
+  public async skappAction(action: skappActionType, appId: string, data: any): Promise<IDACResponse> {
+    let result:IDACResponse = {
+      submitted:false,
       
-      console.log("Workshop :: Updated Profile", prof);
-
-    } catch (error) {
-      console.log(`Workshop :: error with userprofile DAC: ${error.message}`);
-    }
-    /*****/
-  };
-
-  // loadData will load the users data from SkyDB
-  const loadData = async (event) => {
-    event.preventDefault();
-    setLoading(true);
-    console.log('Loading user data from SkyDB');
-
-    /************************************************/
-    /*        Step 4.5 Code goes here              */
-    /************************************************/
-    // Use getJSON to load the user's information from SkyDB
-    const { data } = await mySky.getJSON(filePath);
-
-    // To use this elsewhere in our React app, save the data to the state.
-    if (data) {
-      setName(data.name);
-      setFileSkylink(data.skylinkUrl);
-      setWebPageSkylink(data.dirSkylinkUrl);
-      setUserColor(data.color);
-      console.log('User data loaded from SkyDB!');
-    } else {
-      console.error('There was a problem with getJSON');
-    }
-    /*****/
-
-    setLoading(false);
-  };
-
-  const handleSaveAndRecord = async (event) => {
-    event.preventDefault();
-    setLoading(true);
-
-    /************************************************/
-    /*        Step 4.6 Code goes here              */
-    /************************************************/
-    console.log('Saving user data to MySky');
-
-    const jsonData = {
-      name,
-      skylinkUrl: fileSkylink,
-      dirSkylinkUrl: webPageSkylink,
-      color: userColor,
     };
+    try{
+    switch(action){
+        case skappActionType.DEPLOY:
+        case skappActionType.REDEPLOY:
+          await this.setDeployedAppInfo(appId,data)
+          await this.updateDeployedIndex(appId);
+          result.submitted=true
+          break; 
+        case skappActionType.PUBLISH:
+          let appstats:IAppStats={
+            id:appId,
+            version:'1',
+            prevSkylink:'',
+            ts: (new Date()).toUTCString(),
+            content : {
+              favorite : 0,
+              viewed: 0, // counter increments everytime card is clicked to view details
+              liked : 0,
+              accessed : 0
+            }
+          }
+          await this.setPublishedAppStats(appId,appstats)
+          let appcomments:IAppComments={
+            id:appId,
+            version:'1',
+            prevSkylink:'',
+            ts: (new Date()).toUTCString(),
+            content:{
+              comments:[]
+            }
+          }
+          await this.setPublishedAppComments(appId,appcomments)
+        case skappActionType.REPUBLISH:
+          await this.setPublishedAppInfo(appId,data)
+          await this.updatePublisedIndex(appId);
+          result.submitted=true
+          break;
+        case skappActionType.LIKED:
+        case skappActionType.UNLIKED:
+          if(await this.checkPublishedApp(appId)){
+          let like:IAppStats = await this.getPublishedAppStats(appId);
+          like.ts= (new Date()).toUTCString();
+          like.content.liked=action==skappActionType.LIKED?1:0;
+          await this.setPublishedAppStats(appId,like);
+          }
+          break;       
+        case skappActionType.FAVORITE:
+        case skappActionType.UNFAVORITE:
+          if(await this.checkPublishedApp(appId)){
+          let fav:IAppStats = await this.getPublishedAppStats(appId);
+          fav.ts= (new Date()).toUTCString();
+          fav.content.favorite=action==skappActionType.FAVORITE?1:0;
+          await this.setPublishedAppStats(appId,fav);
+          }
+          break; 
+        case skappActionType.VIEWED:
+          if(await this.checkPublishedApp(appId)){
+          let view:IAppStats = await this.getPublishedAppStats(appId);
+          view.ts= (new Date()).toUTCString();
+          view.content.viewed+=1;
+          await this.setPublishedAppStats(appId,view);
+          }
+          break;
+        case skappActionType.ACCESSED:
+          if(await this.checkPublishedApp(appId)){
+          let access:IAppStats = await this.getPublishedAppStats(appId);
+          access.ts= (new Date()).toUTCString();
+          access.content.accessed+=1;
+          await this.setPublishedAppStats(appId,access);
+          }
+          break;
+        case skappActionType.ADD_COMMENT:
+          if( await this.checkPublishedApp(appId)){
+          let comment:IAppComments = await this.getPublishedAppComments(appId);
+          comment.ts= (new Date()).toUTCString();
+          comment.content.comments.push({timestamp:(new Date()).toUTCString(), comment:data.comment})
+          await this.setPublishedAppComments(appId,comment);
+          }
+          break;  
+      default:
+        this.log('No such Implementation');
+    }
+  }catch(error){
+    result.error=error;
+  }
+  return result;
+  }
 
+  private async checkPublishedApp(appId:string){
+    let indexData:any ={};
+    try{
+      indexData=await this.mySky.getJSON(this.paths.PUBLISHED_INDEX_PATH);
+    }catch(error){
+      throw Error('NO Index present')
+    }
+    if(indexData.published.includes(appId)){
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
+
+  private async updatePublisedIndex(appId:string){
+    let indexData:any ={};
+    try{
+      indexData=await this.mySky.getJSON(this.paths.PUBLISHED_INDEX_PATH);
+    }catch(error){
+      indexData['published']=[]
+    }
+    if(indexData==null || indexData==undefined ||indexData.published==null ||indexData.published==undefined)
+    {indexData={}
+    indexData['published']=[]}
+    if(!indexData.published.includes(appId)){
+      indexData.published.push(appId);
+      this.mySky.setJSON(this.paths.PUBLISHED_INDEX_PATH,indexData);
+    }
+  }
+  private async updateDeployedIndex(appId:string){
+    let indexData:any ={};
+    try{
+      indexData=await this.mySky.getJSON(this.paths.DEPLOYED_INDEX_PATH);
+    }catch(error){
+      indexData['deployed']=[]
+    }
+    if(indexData==null || indexData==undefined ||indexData.deployed==null ||indexData.deployed==undefined)
+    {indexData={}
+    indexData['deployed']=[]}
+    if(!indexData.deployed.includes(appId)){
+      indexData.deployed.push(appId);
+      this.mySky.setJSON(this.paths.DEPLOYED_INDEX_PATH,indexData);
+    }
+  }
+
+  public async init() {
     try {
-      // write data with MySky
-      await mySky.setJSON(filePath, jsonData);
+      // extract the skappname and use it to set the filepaths
+      const hostname = new URL(document.referrer).hostname
+      const skapp = await this.client.extractDomain(hostname)
+      this.log("loaded from skapp", skapp)
+      this.skapp = skapp;
 
-      // Tell contentRecord we updated the color
-      // await contentRecord.recordInteraction({
-      //   skylink: webPageSkylink,
-      //   metadata: { action: 'updatedColorOf' },
-      // });
-
-      let profile = {
-        username: "kushal"
-
+      this.paths = {
+        SKAPPS_DICT_PATH: `${DATA_DOMAIN}/skapp-dict.json`,//{skapp_name:true/false}
+        PUBLISHED_INDEX_PATH: `${DATA_DOMAIN}/${skapp}/published/index.json`,
+        ///JSON Data: [appId1, AppId2....]
+        //PATH_Example: /skyapps.hns/skapp.hns/published/index.json, /skyapps.hns/anotherAppStore.hns/published/index.json..etc
+        PUBLISHED_APP_INFO_PATH:`${DATA_DOMAIN}/${skapp}/published/`,
+        PUBLISHED_APP_COMMENT_PATH: `${DATA_DOMAIN}/${skapp}/published/`,//app-comments.json
+        PUBLISHED_APP_STATS_PATH: `${DATA_DOMAIN}/${skapp}/published/`,//app-stats.json
+        DEPLOYED_INDEX_PATH: `${DATA_DOMAIN}/${skapp}/deployed/index.json`,
+        //JSON Data: [appId1, AppId2....]
+        DEPLOYED_APP_INFO_PATH: `${DATA_DOMAIN}/${skapp}/deployed/`,
       }
 
-      await userprofile.createProfile(profile);
+      // load mysky
+      const opts = { dev: DEV_ENABLED }
+      this.mySky = await this.client.loadMySky(DATA_DOMAIN, opts)
+
+
     } catch (error) {
-      console.log(`error with setJSON: ${error.message}`);
+      this.log('Failed to load MySky, err: ', error)
+      throw error;
     }
-    /*****/
 
-    setLoading(false);
-  };
+    try{
+     this.skappDict= await this.mySky.getJSON(this.paths.SKAPPS_DICT_PATH)
+    }catch(error){
+      this.log('Failed to load skappDict, err: ', error)
+      this.skappDict[this.skapp]=true;
+      this.mySky.setJSON(this.paths.SKAPPS_DICT_PATH,this.skappDict);
+      this.log('updated current skapp to skapp dict');
+    }
+  }
 
-  // define args passed to form
-  const formProps = {
-    mySky,
-    handleSubmit,
-    handleMySkyLogin,
-    handleMySkyLogout,
-    handleSaveAndRecord,
-    loadData,
-    name,
-    dataKey,
-    userColor,
-    activeTab,
-    fileSkylink,
-    webPageSkylink,
-    loading,
-    loggedIn,
-    dataDomain,
-    userID,
-    setLoggedIn,
-    setDataKey,
-    setFile,
-    setName,
-    setUserColor,
-  };
+  public async getPublishedApps(appIds: string[]): Promise<any[]> {
+    let indexData:any ={};
+    let results:any[] = [];
+    if(appIds ==null || appIds.length==0 ){
+     try {
+      indexData=await this.mySky.getJSON(this.paths.PUBLISHED_INDEX_PATH);
+     } catch (error) {
+      throw new Error("NO PUBLISHED APP");
+     } 
+     appIds = indexData.published;
+    }
+    for(let appid of appIds){
+      let appData :any;
+      try{
+        appData= await this.getPublishedAppInfo(appid);
+      results.push(appData);
+      }catch(error){
+        this.log('missing json for appid :',appid);
+      }
+    }
+    return results;
+  }
 
-  // handleSelectTab handles selecting the part of the workshop
-  const handleSelectTab = (e, { activeIndex }) => {
-    setActiveTab(activeIndex);
-  };
+  public async getSkappsInfo(appIds: string[]): Promise<any[]> {
+    let indexData:any ={};
+    let results:any[] = [];
+    if(appIds ==null || appIds.length==0 ){
+     try {
+      indexData=await this.mySky.getJSON(this.paths.PUBLISHED_INDEX_PATH);
+     } catch (error) {
+      throw new Error("NO PUBLISHED APP");
+     } 
+     appIds = indexData.published;
+    }
+    for(let appid of appIds){
+      let appMaster:any={};
+      let appData :any;
+      let appStats :any;
+      let appComments :any;
+      try{
+        appData= await this.mySky.getJSON(this.paths.PUBLISHED_APP_INFO_PATH+appid+'/'+'appInfo.json');
+        appStats= await this.mySky.getJSON(this.paths.PUBLISHED_APP_INFO_PATH+appid+'/'+'appStats.json');
+        appComments= await this.mySky.getJSON(this.paths.PUBLISHED_APP_INFO_PATH+appid+'/'+'appComments.json');
+        appMaster={
+          appdata:appData,
+          appstats: appStats,
+          appcomments: appComments
+        }
+        results.push(appMaster);
+      }catch(error){
+        this.log('missing json for appid :',appid);
+      }
+    }
+    return results;
+  }
+  public async getSkappStats(appId: string): Promise<any> {
+    let appData :any;
+    try{
+      appData= await this.mySky.getJSON(this.paths.PUBLISHED_APP_INFO_PATH+appId+'/'+'appStats.json');
+    
+    }catch(error){
+      this.log('missing json for appid :',appId);
+      throw new Error("missing json for appid :"+appId);
+    }
+    return appData;
+  }
+  public async getSkappComments(appId: string): Promise<any> {
+    let appData :any;
+    try{
+      appData= await this.mySky.getJSON(this.paths.PUBLISHED_APP_INFO_PATH+appId+'/'+'appComments.json');
+    }catch(error){
+      this.log('missing json for appid :',appId);
+      throw new Error("missing json for appid :"+appId);
+    }
+    return appData;
+  }
+  public async getDeployedApps(appIds: string[]): Promise<any[]> {
+    let indexData:any ={};
+    let results:IDeployedApp[] = [];
+    if(appIds ==null || appIds.length==0 ){
+     try {
+      indexData=await this.mySky.getJSON(this.paths.DEPLOYED_INDEX_PATH);
+     } catch (error) {
+      throw new Error("NO DEPLOYED APP");
+     } 
+     appIds = indexData.deployed;
+    }
+    for(let appid of appIds){
+      let appData :any;
+      try{
+        appData= await this.getDeployedAppInfo(appid);
+      results.push(appData);
+      }catch(error){
+        this.log('missing json for appid :',appid);
+      }
+    }
+    return results;
+  }
+  private async getPublishedAppInfo(appId:string):Promise<any>{
+    return await this.mySky.getJSON(this.paths.PUBLISHED_APP_INFO_PATH+appId+'/'+'appInfo.json');
+  }
+  private async getPublishedAppStats(appId:string):Promise<any>{
+    return (await this.mySky.getJSON(this.paths.PUBLISHED_APP_INFO_PATH+appId+'/'+'app-stats.json'));
+  }
+  private async setPublishedAppStats(appId:string,data:any){
+    return await this.mySky.setJSON(this.paths.PUBLISHED_APP_INFO_PATH+appId+'/'+'app-stats.json',data);
+  }
+  private async getPublishedAppComments(appId:string):Promise<any>{
+    return await this.mySky.getJSON(this.paths.PUBLISHED_APP_INFO_PATH+appId+'/'+'app-comments.json');
+  }
+  private async setPublishedAppComments(appId:string,data:any){
+    return await this.mySky.setJSON(this.paths.PUBLISHED_APP_INFO_PATH+appId+'/'+'app-comments.json',data);
+  }
+  private async setPublishedAppInfo(appId:string, appData:any){
+    return await this.mySky.setJSON(this.paths.PUBLISHED_APP_INFO_PATH+appId+'/'+'appInfo.json',appData);
+  }
+  private async getDeployedAppInfo(appId:string){
+    return await this.mySky.getJSON(this.paths.DEPLOYED_APP_INFO_PATH+appId+'/'+'appInfo.json');
+  }
+  private async setDeployedAppInfo(appId:string, appData:any){
+    return await this.mySky.setJSON(this.paths.DEPLOYED_APP_INFO_PATH+appId+'/'+'appInfo.json',appData);
+  }
+  // onUserLogin is called by MySky when the user has logged in successfully
+  public async onUserLogin() {
+    // Register the skapp name in the dictionary
+    
+  }
 
-  const panes = [
-    {
-      menuItem: 'Part 1: File Upload',
-      render: () => (
-        <Tab.Pane>
-          <WorkshopForm {...formProps} />
-        </Tab.Pane>
-      ),
-    },
-    {
-      menuItem: 'Part 2: Folder Upload',
-      render: () => (
-        <Tab.Pane>
-          <WorkshopForm {...formProps} />
-        </Tab.Pane>
-      ),
-    },
-    {
-      menuItem: 'Part 3: MySky',
-      render: () => (
-        <Tab.Pane>
-          <WorkshopForm {...formProps} />
-        </Tab.Pane>
-      ),
-    },
-    {
-      menuItem: 'Part 4: Content Record DAC',
-      render: () => (
-        <Tab.Pane>
-          <WorkshopForm {...formProps} />
-        </Tab.Pane>
-      ),
-    },
-  ];
 
-  return (
-    <Container>
-      <Header
-        as="h1"
-        content="Skynet Workshop App"
-        textAlign="center"
-        style={{ marginTop: '1em', marginBottom: '1em' }}
-      />
-      <Tab
-        menu={{ fluid: true, vertical: true, tabular: true }}
-        panes={panes}
-        onTabChange={handleSelectTab}
-        activeIndex={activeTab}
-      />
-    </Container>
-  );
+  // registerSkappName is called on init and ensures this skapp name is
+  // registered in the skapp name dictionary.
+  private async registerSkappName() {
+    const { SKAPPS_DICT_PATH } = this.paths;
+    let skapps = await this.downloadFile<IDictionary>(SKAPPS_DICT_PATH);
+    if (!skapps) {
+      skapps = {};
+    }
+    skapps[this.skapp] = true;
+    await this.updateFile(SKAPPS_DICT_PATH, skapps);
+  }
+
+
+  // downloadFile merely wraps getJSON but is typed in a way that avoids
+  // repeating the awkward "as unknown as T" everywhere
+  private async downloadFile<T>(path: string): Promise<T | null> {
+    this.log('downloading file at path', path)
+    const { data } = await this.mySky.getJSON(path)
+    if (!data) {
+      this.log('no data found at path', path)
+      return null;
+    }
+    this.log('data found at path', path, data)
+    return data as unknown as T
+  }
+
+  // updateFile merely wraps setJSON but is typed in a way that avoids repeating
+  // the awkwars "as unknown as JsonData" everywhere
+  private async updateFile<T>(path: string, data: T) {
+    this.log('updating file at path', path, data)
+    await this.mySky.setJSON(path, data as unknown as JsonData)
+  }
+
+
+
+  // toPersistence turns content info into a content persistence object
+  private toPersistence(data: IContentInfo): IContentPersistence {
+    const persistence = {
+      timestamp: Math.floor(Date.now() / 1000),
+      ...data,
+    }
+
+    if (persistence.metadata === undefined) {
+      persistence.metadata = {};
+    }
+    
+    // validate the given data does not exceed max size
+    const size = Buffer.from(JSON.stringify(persistence)).length
+    if (size > ENTRY_MAX_SIZE) {
+      throw new Error(`Entry exceeds max size, ${length}>${ENTRY_MAX_SIZE}`)
+    }
+
+    return persistence;
+  }
+
+  // log prints to stdout only if DEBUG_ENABLED flag is set
+  private log(message: string, ...optionalContext: any[]) {
+    if (DEBUG_ENABLED) {
+      console.log(message, ...optionalContext)
+    }
+  }
 }
-
-export default App;
