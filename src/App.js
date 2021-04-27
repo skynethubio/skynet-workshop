@@ -76,10 +76,10 @@ function App() {
       try {
         // load invisible iframe and define app's data domain
         // needed for permissions write
-        const mySky = await client.loadMySky(dataDomain);
+        const mySky = await client.loadMySky(dataDomain,{dev:true, debug: true});
     
         // load necessary DACs and permissions
-         await mySky.loadDacs(contentRecord);
+         await mySky.loadDacs(contentRecord,{dev:true, debug: true});
     
         // check if user is already logged in with permissions
         const loggedIn = await mySky.checkLogin();
