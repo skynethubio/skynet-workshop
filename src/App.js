@@ -23,7 +23,7 @@ import { SkappsRecordDAC } from '@kbiswas/skapps-record-library';
 const portal = 'https://siasky.net/';
 
 // Initiate the SkynetClient
-const client = new SkynetClient();
+const client = new SkynetClient(portal);
 /*****/
 
 /************************************************/
@@ -76,7 +76,7 @@ function App() {
       try {
         // load invisible iframe and define app's data domain
         // needed for permissions write
-        const mySky = await client.loadMySky(dataDomain,{dev:true, debug: true});
+        const mySky = await client.loadMySky(dataDomain);
     
         // load necessary DACs and permissions
          await mySky.loadDacs(contentRecord,{dev:true, debug: true});
