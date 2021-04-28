@@ -236,8 +236,8 @@ function App() {
       let profile = {
         version: 1,
         username: "crypto_rocket",
-        aboutMe: "SkynetHub Founder and CEO. Product Architect - SkySpace.hns, Skapp.hns",
-        location: "Virginia",
+        aboutMe: "SkynetHub Founder",
+        location: "USA",
         topics: ['Skynet', 'SkyDB']
       }
       console.log('Workshop :: before setProfile');
