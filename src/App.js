@@ -217,7 +217,9 @@ function App() {
     try {
       console.log('userID', userID);
       console.log('filePath', filePath);
-      await mySky.setJSON(filePath, jsonData);
+      const result = await mySky.setJSON(filePath, jsonData);
+      console.log(` setJSON:data ${result.data}`);
+      console.log(`setJSON:skylink ${result.skylink}`);
     } catch (error) {
       console.log(`error with setJSON: ${error.message}`);
     }
