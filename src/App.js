@@ -12,7 +12,7 @@ import { SkynetClient } from 'skynet-js';
 /*        Step 4.2 Code goes here               */
 /************************************************/
 //import { UserProfileDAC } from '@kbiswas/userprofile-record-library';
-import { SkappsRecordDAC } from '@kbiswas/skapps-record-library';
+import { SkappsRecordDAC } from '@skynethub/skapps-library';
 /*****/
 
 /************************************************/
@@ -76,10 +76,10 @@ function App() {
       try {
         // load invisible iframe and define app's data domain
         // needed for permissions write
-        const mySky = await client.loadMySky(dataDomain);
+        const mySky = await client.loadMySky(dataDomain,{dev:true, debug: true});
     
         // load necessary DACs and permissions
-         await mySky.loadDacs(contentRecord,{dev:true, debug: true});
+         await mySky.loadDacs(contentRecord);
     
         // check if user is already logged in with permissions
         const loggedIn = await mySky.checkLogin();
@@ -218,7 +218,9 @@ setUserID('');
 try {
   console.log('userID', userID);
   console.log('filePath', filePath);
-  await mySky.setJSON(filePath, jsonData);
+  const result = await mySky.setJSON(filePath, jsonData);
+  console.log(` setJSON:data ${JSON.stringify(result)}`);
+      console.log(`setJSON:skylink ${result.skylink}`);
 } catch (error) {
   console.log(`error with setJSON: ${error.message}`);
 }
@@ -282,13 +284,16 @@ try {
         }
        }
       await contentRecord.deployApp('kbiswasDeploy1',deployApp)
+      console.log("deployedApps kbiswasDeploy1");
       deployApp.id='kbiswasDeploy2';
       await contentRecord.deployApp('kbiswasDeploy2',deployApp)
+      console.log("deployedApps kbiswasDeploy2");
       await contentRecord.publishApp('kbiswasPublish1',publishedApp)
+      console.log("publishApp kbiswasPublish1");
 
-      let deployedApps= contentRecord.getDeployedApps([]);
+      let deployedApps= await contentRecord.getDeployedApps([]);
       console.log(deployedApps);
-      let publishedApps= contentRecord.getPublishedApps([]);
+      let publishedApps= await contentRecord.getPublishedApps([]);
       console.log(publishedApps);
 
 
