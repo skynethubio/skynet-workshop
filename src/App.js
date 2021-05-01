@@ -12,7 +12,7 @@ import { SkynetClient } from 'skynet-js';
 /*        Step 4.2 Code goes here               */
 /************************************************/
 //import { UserProfileDAC } from '@kbiswas/userprofile-record-library';
-import { SkappsRecordDAC } from '@skynethub/skapps-library';
+import { SkappDAC } from '@kbiswas/skapps-record-library';
 /*****/
 
 /************************************************/
@@ -29,7 +29,7 @@ const client = new SkynetClient(portal);
 /************************************************/
 /*        Step 4.3 Code goes here               */
 /************************************************/
-const contentRecord = new SkappsRecordDAC();
+const contentRecord = new SkappDAC();
 
 /*****/
 
@@ -269,7 +269,7 @@ try {
        }
       }
       let publishedApp={
-        id: 'kbiswasPublish1',
+        id: 'kbiswasPublish2',
         version:'7',
         previousSkylink:'delta',
         ts: (new Date()).toUTCString(),
@@ -283,21 +283,24 @@ try {
          history: ["test1","test2"]
         }
        }
+       console.log('DEPLOY APP')
       await contentRecord.deployApp('kbiswasDeploy1',deployApp)
       console.log("deployedApps kbiswasDeploy1");
-      deployApp.id='kbiswasDeploy2';
-      await contentRecord.deployApp('kbiswasDeploy2',deployApp)
-      console.log("deployedApps kbiswasDeploy2");
-      await contentRecord.publishApp('kbiswasPublish1',publishedApp)
-      console.log("publishApp kbiswasPublish1");
+      deployApp.id='kbiswasDeploy3';
+      await contentRecord.deployApp('kbiswasDeploy3',deployApp)
+      console.log("deployedApps kbiswasDeploy3");
+      await contentRecord.publishApp('kbiswasPublish2',publishedApp)
+      console.log("publishApp kbiswasPublish2");
 
       let deployedApps= await contentRecord.getDeployedApps([]);
       console.log(deployedApps);
-      let publishedApps= await contentRecord.getPublishedApps([]);
+      let publishedApps= await contentRecord.getPublishedApps(['kbiswasPublish2','kbiswasPublish1']);
       console.log(publishedApps);
-
-
-
+      await contentRecord.likeApp('kbiswasPublish2');
+      await contentRecord.viewedApp('kbiswasPublish2');
+      await contentRecord.favouriteApp('kbiswasPublish2');
+       let stats = await contentRecord.getSkappStats('kbiswasPublish2');
+       console.log(stats);
     } catch (error) {
       console.log(`error with CR DAC: ${error.message}`);
     }
