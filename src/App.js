@@ -11,7 +11,7 @@ import { SkynetClient } from 'skynet-js';
 /************************************************/
 /*        Step 4.2 Code goes here               */
 /************************************************/
-import { UserProfileDAC } from '@skynethub/userprofile-record-library';
+import { UserProfileDAC } from '@skynethub/userprofile-library';
 /*****/
 
 /************************************************/
