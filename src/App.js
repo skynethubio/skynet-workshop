@@ -12,7 +12,7 @@ import { SkynetClient } from 'skynet-js';
 /*        Step 4.2 Code goes here               */
 /************************************************/
 //import { UserProfileDAC } from '@kbiswas/userprofile-record-library';
-import { SkappDAC } from '@kbiswas/skapps-record-library';
+import { SkappDAC } from '@kbiswas/skapp-library';
 /*****/
 
 /************************************************/
@@ -299,6 +299,8 @@ try {
       await contentRecord.likeApp('kbiswasPublish2');
       await contentRecord.viewedApp('kbiswasPublish2');
       await contentRecord.favouriteApp('kbiswasPublish2');
+      let count = await contentRecord.getPublishedAppsCount();
+      console.log('COUNT OF PUBLISHED APP :'+count);
        let stats = await contentRecord.getSkappStats('kbiswasPublish2');
        console.log(stats);
     } catch (error) {
