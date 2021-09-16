@@ -19,7 +19,7 @@ import { UserProfileDAC } from '@skynethub/userprofile-library';
 /************************************************/
 // We'll define a portal to allow for developing on localhost.
 // When hosted on a skynet portal, SkynetClient doesn't need any arguments.
-const portal = 'https://siasky.net/';
+const portal = 'https://siasky.net';
 
 // Initiate the SkynetClient
 const client = new SkynetClient(portal);
@@ -62,7 +62,7 @@ function App() {
   /*        Step 3.1 Code goes here               */
   /************************************************/
 
-  const dataDomain = '';
+  const dataDomain = 'localhost';
 
   /*****/
 
@@ -252,7 +252,7 @@ function App() {
       console.log("#### getProfile(userID) FIRST_TIME ", profileObj);
       let profile = {
         version: 1,
-        username: "crypto_rocket",
+        username: "ROCK",
         emailID: "skynethub.io@gmail.com",
         firstName: "skynet",
         lastName: "hub",
