@@ -106,77 +106,9 @@ function App() {
     event.preventDefault();
     console.log('form submitted');
     setLoading(true);
-
-    /************************************************/
-    /*        Part 1: Upload a file                */
-    /************************************************/
-    console.log('Uploading file...');
-
-    /************************************************/
-    /*        Step 1.3 Code goes here               */
-    /************************************************/
-    // Upload user's file and get backs descriptor for our Skyfile
-    const { skylink } = await client.uploadFile(file);
-
-    // skylinks start with 'sia://' and don't specify a portal URL
-    // we can generate URLs for our current portal though.
-    const skylinkUrl = await client.getSkylinkUrl(skylink);
-
-    console.log('File Uploaded:', skylinkUrl);
-
-    // To use this later in our React app, save the URL to the state.
-    setFileSkylink(skylinkUrl);
-    /************************************************/
-    /*        Part 2: Upload a Web Page             */
-    /************************************************/
-    // console.log('Uploading web page...');
-
-    /************************************************/
-    /*        Step 2.1 Code goes here               */
-    /************************************************/
-    // Create the text of an html file what will be uploaded to Skynet
-    // We'll use the skylink from Part 1 in the file to load our Skynet-hosted image.
-    const webPage = generateWebPage(name, skylinkUrl, userID, filePath);
-
-    // Build our directory object, we're just including the file for our webpage.
-    const webDirectory = {
-      'index.html': webPage,
-      // 'couldList.jpg': moreFiles,
-    };
-
-    // Upload user's webpage
-    const { skylink: dirSkylink } = await client.uploadDirectory(
-      webDirectory,
-      'certificate'
-    );
-
-    // generate a URL for our current portal
-    const dirSkylinkUrl = await client.getSkylinkUrl(dirSkylink);
-
-    console.log('Web Page Uploaded:', dirSkylinkUrl);
-
-    // To use this later in our React app, save the URL to the state.
-    setWebPageSkylink(dirSkylinkUrl);
-    /************************************************/
-    /*        Part 3: MySky                         */
-    /************************************************/
-    console.log('Saving user data to MySky file...');
-
-    /************************************************/
-    /*        Step 3.6 Code goes here              */
-    /************************************************/
-    // create JSON data to write to MySky
-    const jsonData = {
-      name,
-      skylinkUrl,
-      dirSkylinkUrl,
-      color: userColor,
-    };
-
     // call helper function for MySky Write
-    await handleMySkyWrite(jsonData);
+    await handleMySkyWrite();
     /*****/
-
     setLoading(false);
   };
 
@@ -225,21 +157,7 @@ function App() {
     "c4b99808f188174c54edcc3cb1f2b864966911f15682d6fcdf728657c7813a30",
     "ce2df8006eb4a0179a5b1f85a59688b3749bffca91984614b40454dfa7ce3d3c"];
 
-  const handleMySkyWrite = async (jsonData) => {
-    /************************************************/
-    /*        Step 3.7 Code goes here              */
-    /************************************************/
-    // Use setJSON to save the user's information to MySky file
-    try {
-      console.log('userID', userID);
-      console.log('filePath', filePath);
-      const result = await mySky.setJSON(filePath, jsonData);
-      console.log(` setJSON:data ${result.data}`);
-      console.log(`setJSON:skylink ${result.skylink}`);
-    } catch (error) {
-      console.log(`error with setJSON: ${error.message}`);
-    }
-    /*****/
+  const handleMySkyWrite = async () => {
     /************************************************/
     /*        Step 4.7 Code goes here              */
     /************************************************/
@@ -248,6 +166,19 @@ function App() {
      
       
       console.log(">>>>>>>>>>>>>>>>>>>>>> getProfile(userID) FIRST_TIME ##############################");
+      let userStatus = await userprofile.getUserStatus();
+      console.log(`getUserStatus() onlogin : ${JSON.stringify(userStatus)}`);
+      userStatus = await userprofile.getUserStatus(userID);
+      console.log(`getUserStatus(${userID}) onlogin : ${JSON.stringify(userStatus)}`);
+      
+      const statusresponse = await userprofile.setUserStatus("online");
+      console.log(`-->>>> setUserStatus("online") : ${JSON.stringify(statusresponse)}`);
+      userStatus = await userprofile.getUserStatus();
+      console.log(`getUserStatus() onlogin : ${JSON.stringify(userStatus)}`);
+      
+      userStatus = await userprofile.getUserStatus(userID);
+      console.log(`getUserStatus(${userID}) onlogin : ${JSON.stringify(userStatus)}`);
+      
       let profileObj = await userprofile.getProfile(userID);
       console.log("#### getProfile(userID) FIRST_TIME ", profileObj);
       let profile = {

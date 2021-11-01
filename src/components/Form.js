@@ -68,123 +68,12 @@ const WorkshopForm = (props) => {
                   iconPosition="left"
                 />
               </Form.Field>
-              <Form.Group>
-                <Form.Field>
-                  <label>File Path</label>
-                  <Input
-                    label={props.dataDomain + '/'}
-                    placeholder="Enter rest of path."
-                    value={props.dataKey}
-                    onChange={(e) => {
-                      props.setDataKey(e.target.value);
-                    }}
-                  />
-
-                  {props.activeTab === 2 && (
-                    <Label pointing basic color="green">
-                      MySky Files are saved at a path. An app must have
-                      permissions to write there.
-                    </Label>
-                  )}
-                </Form.Field>
-              </Form.Group>
-              <Divider />
-              <Form.Group>
-                <Form.Input
-                  label="Color"
-                  placeholder="#000000"
-                  value={props.userColor}
-                  onChange={(e) => {
-                    props.setUserColor(e.target.value);
-                  }}
-                />
-                <Segment basic>
-                  <PopoverPicker
-                    style={{ bottom: 0 }}
-                    color={props.userColor}
-                    onChange={props.setUserColor}
-                  />
-                </Segment>
-              </Form.Group>
-              {props.activeTab > 2 && (
-                <Form.Group inline>
-                  <Button
-                    variant="success"
-                    disabled={props.loggedIn !== true || !props.dataKey}
-                    onClick={(e) => {
-                      props.loadData(e);
-                    }}
-                  >
-                    Load Data from File
-                  </Button>
-                  <Button
-                    style={{ marginLeft: '20px' }}
-                    variant="success"
-                    size="md"
-                    disabled={
-                      props.loggedIn !== true ||
-                      !props.dataKey ||
-                      !props.userColor
-                    }
-                    onClick={(e) => {
-                      props.handleSaveAndRecord(e);
-                    }}
-                  >
-                    Save Data and Record Update Action
-                  </Button>
-                  {props.activeTab === 3 && (
-                    <Label pointing="left" basic color="green">
-                      MySky + DAC!
-                    </Label>
-                  )}
-                </Form.Group>
-              )}
-              <Divider />
-            </>
-          )}
-          {/* Input for name */}
-          {props.activeTab > 0 && (
-            <>
-              <Header as="h4">Input for Certificate</Header>
-              <Form.Group>
-                <Form.Input
-                  label="Name"
-                  placeholder="Enter your name"
-                  value={props.name}
-                  onChange={(e) => {
-                    props.setName(e.target.value);
-                  }}
-                />
-              </Form.Group>
             </>
           )}
           {/* Input for file */}
-          <Header as="h4">Image Upload</Header>
-          <Form.Group inline>
-            <Form.Field>
-              <label>Avatar Photo</label>
-              <FileDrop
-                setFile={props.setFile}
-                setUploadPreview={setUploadPreview}
-              />
-            </Form.Field>
-            <Image src={uploadPreview} size="small" />
-          </Form.Group>
-          {props.activeTab === 0 && (
-            <Label pointing basic color="green">
-              After uploading to Skynet, an immutable Skylink is returned!
-            </Label>
-          )}
-          <Divider />
-          <Button primary disabled={!uploadPreview} type="submit">
-            Send to Skynet
+          <Button primary type="submit">
+            Test UserProfile
           </Button>
-          {props.activeTab === 1 && (
-            <Label pointing="left" basic color="green">
-              Now we'll upload a directory with an index.html file. The Skylink
-              will be a website.
-            </Label>
-          )}
         </Form>
       </Segment>
       <Links
