@@ -1527,10 +1527,10 @@
     skynet-js "^4.0.0-beta"
     skynet-mysky-utils "^0.1.0"
 
-"@skynethub/userprofile-library@^0.1.14-beta":
-  version "0.1.14-beta"
-  resolved "https://registry.yarnpkg.com/@skynethub/userprofile-library/-/userprofile-library-0.1.14-beta.tgz#c4d297ae26c1f0dc2c3f9f61e97f9c8c9293eed0"
-  integrity sha512-HrSC0ouIUdjUGpPc2U91yVpLwjBsIVG6Ku53S5hpAiIQwZGm7FU8IICKgFtrVa+DycrwAoFFmurb2bMGOpgo4g==
+"@skynethub/userprofile-library@0.1.15-beta":
+  version "0.1.15-beta"
+  resolved "https://registry.yarnpkg.com/@skynethub/userprofile-library/-/userprofile-library-0.1.15-beta.tgz#a115d55de62e55144961a182734385f144c28563"
+  integrity sha512-aY+BEvVG6XCSXhpHl2RW83nUW4KQFaKz80HmFD0TSEv51sX1JrJR0m23BLG0BphXJokg3Vf0QgxXLhaPEEmlkg==
   dependencies:
     post-me "^0.4.5"
     skynet-js "4.0.18-beta"

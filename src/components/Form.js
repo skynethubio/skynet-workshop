@@ -18,11 +18,62 @@ import FileDrop from './Filedrop';
 // WorkshopForm is a simple form used for the Skynet Workshop
 const WorkshopForm = (props) => {
   const [uploadPreview, setUploadPreview] = useState(props.fileSkylink);
+  const [userID, setUserID] = useState(props.fileSkylink);
+  const [globalUserStatus, setGlobalUserStatus] = useState(null);
+  const [skappUserStatus, setSkappUserStatus] = useState(null);
+  const [globalUserPref, setGlobalUserPref] = useState(null);
+  const [skappUserPref, setSkappUserPref] = useState(null);
 
   useEffect(() => {
     setUploadPreview(props.fileSkylink);
-  }, [props.fileSkylink]);
+    setUserID(props.userID)
+  }, [props.fileSkylink, props.userID]);
 
+  useEffect(() => {
+    getUserStatus();
+    getUserPref();
+    const interval = setInterval(() => {
+      getUserStatus();
+      getUserPref();
+      if (!userID) return;
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [userID]);
+
+  const getUserStatus = async () => {
+    if (userID) {
+      //console.log("### props.userID "+userID);
+      let userStatus = await props.userprofile.getUserStatus(userID);
+      //console.log(`### Date.now() ${Date.now()} ### userStatus.lastSeen ${userStatus.lastSeen}`);
+      let ts = new Date(Number(userStatus.lastSeen));
+      //console.log("### ts (global)"+ts.toUTCString());
+      setGlobalUserStatus(userStatus.status + "|" + userStatus.lastSeen && userStatus.lastSeen !== 0 ? ts.toLocaleString() : 0);
+      //console.log("### userstatus"+userStatus.lastSeen);
+      userStatus = await props.userprofile.getUserStatus(userID, { skapp: "localhost" });
+      ts = new Date(Number(userStatus.lastSeen));
+      //console.log("### ts (Skapp)"+ts.toUTCString());
+      setSkappUserStatus(userStatus.status + "|" + ts.toLocaleString());
+      //console.log("### userstatus"+userStatus.lastSeen);
+    }
+    else {
+      return;
+    }
+  }
+  const getUserPref = async () => {
+    if (userID) {
+      //console.log("### props.userID "+userID);
+      const globalUserPref = await props.userprofile.getGlobalPreferences();
+      console.log("### globalUserPref " + JSON.stringify(globalUserPref));
+      setGlobalUserPref(globalUserPref.preferences.userStatus.statusPrivacy + "|" + globalUserPref.preferences.userStatus.lastSeenPrivacy + "|" + globalUserPref.preferences.userStatus.updatefrequency);
+      const skappUserPref = await props.userprofile.getSkappPreferences();
+      console.log("### skappUserPref " + JSON.stringify(skappUserPref));
+      setSkappUserPref(skappUserPref.userStatus.statusPrivacy + "|" + skappUserPref.userStatus.lastSeenPrivacy + "|" + skappUserPref.userStatus.updatefrequency);
+      //console.log("### userstatus"+userStatus.lastSeen);
+    }
+    else {
+      return;
+    }
+  }
   return (
     <>
       <Segment>
@@ -68,7 +119,45 @@ const WorkshopForm = (props) => {
                   iconPosition="left"
                 />
               </Form.Field>
+              <Form.Field>
+                <label>
+                  Golabal : UserStatus
+                </label>
+                <Input
+                  placeholder="You must Login with MySky..."
+                  value={globalUserStatus}
+                />
+              </Form.Field>
+              <Form.Field>
+                <label>
+                  Skapp : UserStatus
+                </label>
+                <Input
+                  placeholder="You must Login with MySky..."
+                  value={skappUserStatus}
+                />
+              </Form.Field>
+              <Divider />
+              <Form.Field>
+                <label>
+                  Global : User Preferences
+                </label>
+                <Input
+                  placeholder="You must Login with MySky..."
+                  value={globalUserPref}
+                />
+              </Form.Field>
+              <Form.Field>
+                <label>
+                  Skapp : User Preferences
+                </label>
+                <Input
+                  placeholder="You must Login with MySky..."
+                  value={skappUserPref}
+                />
+              </Form.Field>
             </>
+
           )}
           {/* Input for file */}
           <Button primary type="submit">

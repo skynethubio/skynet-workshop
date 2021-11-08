@@ -11,7 +11,7 @@ import { SkynetClient } from 'skynet-js';
 /************************************************/
 /*        Step 4.2 Code goes here               */
 /************************************************/
-import { UserProfileDAC } from '@skynethub/userprofile-library';
+import { UserProfileDAC , LastSeenPrivacyType,PrivacyType} from '@skynethub/userprofile-library';
 /*****/
 
 /************************************************/
@@ -141,138 +141,170 @@ function App() {
     /*****/
   };
 
-  const test_user_ids = ["570980a7f24391a9ced450cd8f22a9d78229c650ad24b7c2686b5bb86915418e",
-    "3d4e50cfe857d94403c21f38be21073ecc42c7c828101e26c7628fd0b6fad67f",
-    "8b8544d54ecf56da6be887232361eec9f524429c1bd523f4778b20fb9945d15c",
-    "d21eb9d8d38e7b495cc47b94a046eab710edf7f1b19d42d5f1b201feb3406a2a",
-    "22f91386b2e341edb046ff880a2e817b3b70fdd958113dc93b9b1375880dd5d2",
-    "c25858373033e730a5e592cb5fd5b5fa90657da06210886c1f30552796973cb9",
-    "73a83de68f07d77a75f3e8d7534f58c2d0a613aeffa2ec4f53238ee5af5a3379",
-    "4294b7224a3d19a75abf7970f1bf3213c0370ea36d36a689cbd39e53333ec7f4",
-    "5dc982eed6290fbe02f7781ec92051ef12e835a0565885eacfc94a9ee07686f0",
-    "b85e1cd34633297d6004446f935d220918a8e2c5b98a5f5cc32c3c6c93f72d6b",
-    "2b02efca9ed51cfed5c645eb3c1513d9343207a9e843454de72771e57c805d48",
-    "403a35ed6b473518a213d514c3d105471d4bb454b67e4c4db106f061c13cb9a3",
-    "dfa6e4e25be41cfe27a4457fab9a162db425cc7d230ff14370f9ae2a86f3a0ec",
-    "c4b99808f188174c54edcc3cb1f2b864966911f15682d6fcdf728657c7813a30",
-    "ce2df8006eb4a0179a5b1f85a59688b3749bffca91984614b40454dfa7ce3d3c"];
-
   const handleMySkyWrite = async () => {
     /************************************************/
     /*        Step 4.7 Code goes here              */
     /************************************************/
     try {
       console.log("Workshop :: ######### USER PROFILE DAC :: START #########  ");
-     
-      
-      console.log(">>>>>>>>>>>>>>>>>>>>>> getProfile(userID) FIRST_TIME ##############################");
-      let userStatus = await userprofile.getUserStatus();
-      console.log(`getUserStatus() onlogin : ${JSON.stringify(userStatus)}`);
-      userStatus = await userprofile.getUserStatus(userID);
+      console.log(">>>>>>>>>>>>>>>>>>>>>> USER STATUS (onLogin) ##############################");
+      let userStatus = await userprofile.getUserStatus(userID);
       console.log(`getUserStatus(${userID}) onlogin : ${JSON.stringify(userStatus)}`);
-      
-      const statusresponse = await userprofile.setUserStatus("online");
+
+      let statusresponse = await userprofile.setUserStatus("Online");
       console.log(`-->>>> setUserStatus("online") : ${JSON.stringify(statusresponse)}`);
-      userStatus = await userprofile.getUserStatus();
-      console.log(`getUserStatus() onlogin : ${JSON.stringify(userStatus)}`);
-      
+
       userStatus = await userprofile.getUserStatus(userID);
       console.log(`getUserStatus(${userID}) onlogin : ${JSON.stringify(userStatus)}`);
-      
-      let profileObj = await userprofile.getProfile(userID);
-      console.log("#### getProfile(userID) FIRST_TIME ", profileObj);
-      let profile = {
-        version: 1,
-        username: "ROCK",
-        emailID: "skynethub.io@gmail.com",
-        firstName: "skynet",
-        lastName: "hub",
-        contact: "911",
-        aboutMe: "SkynetHub Founder",
-        location: "USA",
-        // topicsHidden: [
-        //   "Fighter"
-        // ],
-        // topicsDiscoverable: [
-        //   "Bond"
-        // ],
-        topics: ['Skynet', 'SkyDB'],
-        avatar: [
-          {
-            "ext": "jpeg",
-            "w": 300,
-            "h": 300,
-            "url": "sia://RABycdgWznT8YeIk57CDE9w0CiwWeHi7JoYOyTwq_UaSXQ/49/300"
-          }
-        ]
-      }
-      console.log(">>>>>>>>>>>>>>>>>>>>>> setProfile(profile) SET HARDCODED PROFILE DATA ##############################");
-      await userprofile.setProfile(profile);
-      console.log('setProfile(profile) SET HARDCODED PROFILE DATA : DONE !!');
-      let prof = await userprofile.getProfile(userID);
-      console.log('getProfile(userID) GET NEWLY SET PROFILE DATA '+prof);
-      
-      profile = {
-        version: 1,
-        username: "SkyHUB",
-        emailID: "skynethub.io@gmail.com",
-        firstName: "Sky",
-        lastName: "hub",
-        contact: "007",
-        aboutMe: "SkynetHub Founder and Product Architect",
-        location: "Virginia",
-        // topicsHidden: [
-        //   "Fighter"
-        // ],
-        // topicsDiscoverable: [
-        //   "Bond"
-        // ],
-        topics: ['Skynet', 'SkyDB'],
-        avatar: [
-          {
-            "ext": "jpeg",
-            "w": 300,
-            "h": 300,
-            "url": "sia://RABycdgWznT8YeIk57CDE9w0CiwWeHi7JoYOyTwq_UaSXQ/23/300"
-          }
-        ]
-      }
 
-      console.log(">>>>>>>>>>>>>>>>>>>>>> updateProfile(profile) UPDATE  PROFILE DATA ##############################");
-      await userprofile.updateProfile(profile);
-      console.log('setProfile(profile) UPDATE PROFILE DATA : DONE !!');
-      prof = await userprofile.getProfile(userID);
-      console.log('getProfile(userID) GET UPDATED PROFILE DATA '+prof);
+      userStatus = await userprofile.getUserStatus(userID,{skapp: "localhost"});
+      console.log(`getUserStatus(${userID}, localhost) onlogin : ${JSON.stringify(userStatus)}`);
 
-      console.log(">>>>>>>>>>>>>>>>>>>>>> GET HISTORY ##############################");
-
-      let profileHistoryObj = await userprofile.getProfileHistory(userID);
-      console.log("Workshop :: getProfileHistory() = ", profileHistoryObj);
-
-
-      console.log(">>>>>>>>>>>>>>>>>>>>>> setPreferences(pref) SET HARDCODED PREFERENCES DATA ##############################");
+      console.log(">>>>>>>>>>>>>>>>>>>>>> USER PREFERENCES ##############################");
+      let globalPreference = await userprofile.getGlobalPreferences();
+      console.log(`getGlobalPreferences()  : ${JSON.stringify(globalPreference)}`);
+      let skappPreference = await userprofile.getSkappPreferences();
+      console.log(`getSkappPreferences()  : ${JSON.stringify(skappPreference)}`);
       let pref = {
         version: 1,
         darkmode: true,
-        portal: "siasky.net"
+        portal: "siasky.net",
+        userStatus: {
+          statusPrivacy: PrivacyType.PUBLIC,
+          lastSeenPrivacy: LastSeenPrivacyType.PUBLIC_TS,
+          updatefrequency: 0 // 0,1,5,10,15
+        }
       }
-      await userprofile.setPreferences(pref);
-      console.log('setPreferences(pref) SET HARDCODED PREFERENCES DATA : DONE !!');
-      let prefrencesObj = await userprofile.getPreferences(userID);
-      console.log('setPreferences(pref) GET NEWLY SET PREFERENCES DATA '+prefrencesObj);
+      let result = await userprofile.setPreferences(pref);
+      console.log(`setPreferences()  : ${JSON.stringify(result)}`);
+      pref = {
+        version: 1,
+        darkmode: true,
+        portal: "siasky.net",
+        userStatus: {
+          statusPrivacy: PrivacyType.PUBLIC,
+          lastSeenPrivacy: LastSeenPrivacyType.PUBLIC_TS,
+          updatefrequency: 0 // 0,1,5,10,15
+        }
+      }
+      result = await userprofile.setGlobalPreferences(pref);
+      console.log(`setPreferences()  : ${JSON.stringify(result)}`);
+      globalPreference = await userprofile.getGlobalPreferences();
+      console.log(`getGlobalPreferences()  : ${JSON.stringify(globalPreference)}`);
+      skappPreference = await userprofile.getSkappPreferences();
+      console.log(`getSkappPreferences()  : ${JSON.stringify(skappPreference)}`);
 
-     console.log(">>>>>>>>>>>>>>>>>>>>>> GET HISTORY ##############################");
-      let preferencesHistoryObj = await userprofile.getPreferencesHistory(userID);
-      console.log("Workshop :: getPreferencesHistory() = ", preferencesHistoryObj);
+      console.log(">>>>>>>>>>>>>>>>>>>>>> USER STATUS (After change in preferences)  ##############################");
+      userStatus = await userprofile.getUserStatus(userID);
+      console.log(`getUserStatus(${userID}) onlogin : ${JSON.stringify(userStatus)}`);
+
+      statusresponse = await userprofile.setUserStatus("Online");
+      console.log(`-->>>> setUserStatus("online") : ${JSON.stringify(statusresponse)}`);
+
+      userStatus = await userprofile.getUserStatus(userID);
+      console.log(`getUserStatus(${userID}) onlogin : ${JSON.stringify(userStatus)}`);
+
+      userStatus = await userprofile.getUserStatus(userID,{skapp: "localhost"});
+      console.log(`getUserStatus(${userID}, localhost) onlogin : ${JSON.stringify(userStatus)}`);
+
+      console.log(">>>>>>>>>>>>>>>>>>>>>> USER PROFILE  ##############################");
+      
+        let profileObj = await userprofile.getProfile(userID);
+        console.log("#### getProfile(userID) FIRST_TIME ", profileObj);
+        let profile = {
+          version: 1,
+          username: "ROCK",
+          emailID: "skynethub.io@gmail.com",
+          firstName: "skynet",
+          lastName: "hub",
+          contact: "911",
+          aboutMe: "SkynetHub Founder",
+          location: "USA",
+          // topicsHidden: [
+          //   "Fighter"
+          // ],
+          // topicsDiscoverable: [
+          //   "Bond"
+          // ],
+          topics: ['Skynet', 'SkyDB'],
+          avatar: [
+            {
+              "ext": "jpeg",
+              "w": 300,
+              "h": 300,
+              "url": "sia://RABycdgWznT8YeIk57CDE9w0CiwWeHi7JoYOyTwq_UaSXQ/49/300"
+            }
+          ]
+        }
+        console.log(">>>>>>>>>>>>>>>>>>>>>> setProfile(profile) SET HARDCODED PROFILE DATA ##############################");
+        await userprofile.setProfile(profile);
+        console.log('setProfile(profile) SET HARDCODED PROFILE DATA : DONE !!');
+        let prof = await userprofile.getProfile(userID);
+        console.log('getProfile(userID) GET NEWLY SET PROFILE DATA '+prof);
+        profile = {
+          version: 1,
+          username: "SkyHUB",
+          emailID: "skynethub.io@gmail.com",
+          firstName: "Sky",
+          lastName: "hub",
+          contact: "007",
+          aboutMe: "SkynetHub Founder and Product Architect",
+          location: "Virginia",
+          // topicsHidden: [
+          //   "Fighter"
+          // ],
+          // topicsDiscoverable: [
+          //   "Bond"
+          // ],
+          topics: ['Skynet', 'SkyDB'],
+          avatar: [
+            {
+              "ext": "jpeg",
+              "w": 300,
+              "h": 300,
+              "url": "sia://RABycdgWznT8YeIk57CDE9w0CiwWeHi7JoYOyTwq_UaSXQ/23/300"
+            }
+          ]
+        }
+        console.log(">>>>>>>>>>>>>>>>>>>>>> updateProfile(profile) UPDATE  PROFILE DATA ##############################");
+        await userprofile.updateProfile(profile);
+        console.log('setProfile(profile) UPDATE PROFILE DATA : DONE !!');
+        prof = await userprofile.getProfile(userID);
+        console.log('getProfile(userID) GET UPDATED PROFILE DATA '+prof);
+
+      //   console.log(">>>>>>>>>>>>>>>>>>>>>> GET HISTORY ##############################");
+
+        let profileHistoryObj = await userprofile.getProfileHistory(userID);
+        console.log("Workshop :: getProfileHistory() = ", profileHistoryObj);
 
 
-      console.log(">>>>>>>>>>>>>>>>>>>>>> getProfile(userID) already created ##############################");
-      SKyIdProf = await userprofile.getProfile("b85e1cd34633297d6004446f935d220918a8e2c5b98a5f5cc32c3c6c93f72d6b");
-      console.log("#### getProfile(userID) already created " + SKyIdProf);
+      //   console.log(">>>>>>>>>>>>>>>>>>>>>> setPreferences(pref) SET HARDCODED PREFERENCES DATA ##############################");
+        pref = {
+          version: 1,
+          darkmode: true,
+          portal: "https://siasky.net/",
+          userStatus: {
+            statusPrivacy: "Private",
+            lastSeenPrivacy: "Private",
+            updatefrequency: 0
+          }
+        }
+        await userprofile.setPreferences(pref);
+        console.log('setPreferences(pref) SET HARDCODED PREFERENCES DATA : DONE !!');
+        let prefrencesObj = await userprofile.getPreferences(userID);
+        console.log('setPreferences(pref) GET NEWLY SET PREFERENCES DATA '+prefrencesObj);
 
-      console.log("Workshop :: ######### getProfile () : FETCH SKYID Profile #########  ");
-      let SKyIdProf = await userprofile.getProfile("99efce9ce56128c1ecbbf094e59b716c4eecbad607e20b1593589d271c0e66cd");
-      console.log("#### FETCH SKYID Result : " + SKyIdProf);
+       console.log(">>>>>>>>>>>>>>>>>>>>>> GET HISTORY ##############################");
+        let preferencesHistoryObj = await userprofile.getPreferencesHistory(userID);
+        console.log("Workshop :: getPreferencesHistory() = ", preferencesHistoryObj);
+
+      //   console.log(">>>>>>>>>>>>>>>>>>>>>> getProfile(userID) already created ##############################");
+      //   SKyIdProf = await userprofile.getProfile("b85e1cd34633297d6004446f935d220918a8e2c5b98a5f5cc32c3c6c93f72d6b");
+      //   console.log("#### getProfile(userID) already created " + SKyIdProf);
+
+      //   console.log("Workshop :: ######### getProfile () : FETCH SKYID Profile #########  ");
+      //   let SKyIdProf = await userprofile.getProfile("99efce9ce56128c1ecbbf094e59b716c4eecbad607e20b1593589d271c0e66cd");
+      //   console.log("#### FETCH SKYID Result : " + SKyIdProf);
 
     } catch (error) {
       console.log(`Workshop :: error with userprofile DAC: ${error.message}`);
@@ -350,6 +382,7 @@ function App() {
   // define args passed to form
   const formProps = {
     mySky,
+    userprofile,
     handleSubmit,
     handleMySkyLogin,
     handleMySkyLogout,
